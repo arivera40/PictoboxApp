@@ -24,6 +24,8 @@ interface Post {
 
 interface UserProfile {
   username: string
+  email: string
+  phoneNumber: string
   profilePic: string
   bio: string
   postsCount: number
@@ -32,7 +34,7 @@ interface UserProfile {
   posts: Post[]
 }
 
-export default function DashboardPage() {
+export default function ProfilePage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
@@ -112,6 +114,23 @@ export default function DashboardPage() {
     setSelectedPostId(postId)
   }
 
+
+  const handleProfileUpdate = (updatedData: { username: string; email: string; bio: string }) => {
+    setProfile((prev) =>
+      prev
+        ? {
+            ...prev,
+            username: updatedData.username,
+            email: updatedData.email,
+            bio: updatedData.bio,
+          }
+        : prev,
+    )
+
+    // Optionally refresh the entire profile to sync with server
+    refreshProfile()
+  }
+
   if (isLoading) {
     return <Loading />
   }
@@ -119,6 +138,8 @@ export default function DashboardPage() {
   // Fallback data for preview
   const fallbackProfile: UserProfile = {
     username: "johndoe",
+    email: "test@email.com",
+    phoneNumber: "973-555-2545",
     profilePic: "/placeholder.svg?height=100&width=100",
     bio: "Photography enthusiast | Nature lover | Travel addict",
     postsCount: 42,
@@ -160,12 +181,16 @@ export default function DashboardPage() {
       <main className="container py-8">
         <ProfileHeader
           username={userProfile.username}
+          email={userProfile.email}
+          phoneNumber={userProfile.phoneNumber}
           profilePic={userProfile.profilePic}
           bio={userProfile.bio}
           postsCount={userProfile.postsCount}
           followersCount={userProfile.followersCount}
           followingCount={userProfile.followingCount}
+          isOwnProfile={true} // This would be determined by comparing logged-in user ID with profile user ID
           onProfilePicUpdate={handleProfilePicUpdate}
+          onProfileUpdate={handleProfileUpdate}
         />
         <div className="mt-4 flex gap-2">
           <Button onClick={() => setShowCreatePost(true)}>

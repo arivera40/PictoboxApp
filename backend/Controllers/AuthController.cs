@@ -17,11 +17,6 @@ public class AuthController : ControllerBase
         _logger = logger;
     }
 
-    private bool VerifyPassword(string raw, string hashed)
-    {
-        return BCrypt.Net.BCrypt.Verify(raw, hashed);
-    }
-
     [HttpPost("login")]
     public async Task<IActionResult> loginAsync([FromBody] LoginRequest request)
     {
@@ -29,7 +24,7 @@ public class AuthController : ControllerBase
 
         var user = await _userRepository.GetByEmail(request.Email);
 
-        if (user == null || !VerifyPassword(request.Password, user.Password))
+        if (user == null || !AuthUtility.VerifyPassword(request.Password, user.Password))
         {
             _logger.LogWarning("Login failed for email: {Email}", request.Email);
             return Unauthorized("Invalid credentials");
@@ -60,7 +55,7 @@ public class AuthController : ControllerBase
         {
             Username = request.Username,
             Email = request.Email,
-            Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            Password = AuthUtility.EncryptPassword(request.Password),
             PhoneNumber = request.PhoneNumber
         };
 

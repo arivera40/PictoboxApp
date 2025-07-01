@@ -1,3 +1,4 @@
+using System.Data;
 using Pictobox.Models;
 
 public class PostService
@@ -41,23 +42,23 @@ public class PostService
         return post;
     }
 
-    //   postId: string
-    //   imagePath: string
-    //   caption: string
-    //   likes: number
-    //   comments: number
-    //   postDate: string
-    //   username: string
-    //   profilePicUrl: string x
-    //   isLiked: boolean x
-    //   commentsList: Comment[]
-    public async Task<Post> GetPostById(int postId)
+    public async Task<PostDto?> GetPostById(int postId)
     {
         var post = await _postRepository.GetById(postId);
-        var comments = await _commentRepository.GetComments(post.UserId);
 
-        Console.WriteLine(post);
+        if (post is null)
+            throw new DataException($"Post not found - id: {postId}");
 
         return post;
     }
+
+    public async Task<PostDto?> PostComment(int userId, int postId, CommentRequest commentRequest)
+    {
+        var comment = new Comment(userId, postId, commentRequest.Content);
+        await _commentRepository.Save(comment);
+
+        var post = await _postRepository.GetById(postId);
+        return post;
+    }
+
 }

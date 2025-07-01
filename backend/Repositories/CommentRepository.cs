@@ -19,8 +19,10 @@ public class CommentRepository : ICommentRepository
     public Task<List<Comment>> GetComments(int userId) =>
         _db.Comments.Where(p => p.UserId == userId).ToListAsync();
 
-    public Task<Comment> Save(Post post)
+    public async Task<Comment> Save(Comment comment)
     {
-        throw new NotImplementedException();
+        _db.Comments.Add(comment);
+        await _db.SaveChangesAsync();
+        return comment;
     }
 }

@@ -49,11 +49,13 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.PostId).HasColumnName("post_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.HasOne(d => d.Post).WithMany(p => p.Comments)
-                .HasForeignKey(d => d.PostId)
+            entity.HasOne<Post>()
+                .WithMany(c => c.Comments)
+                .HasForeignKey(p => p.PostId)
                 .HasConstraintName("comments_ibfk_1");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Comments)
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.Comments)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("comments_ibfk_2");
         });
@@ -61,8 +63,7 @@ public partial class ApplicationDbContext : DbContext
         modelBuilder.Entity<Follow>(entity =>
         {
             entity.HasKey(e => new { e.FollowerId, e.FolloweeId })
-                .HasName("PRIMARY")
-                .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+                .HasName("PRIMARY");
 
             entity.ToTable("follows");
 
@@ -75,13 +76,15 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("follow_date");
 
-            entity.HasOne(d => d.Followee).WithMany(p => p.FollowFollowees)
-                .HasForeignKey(d => d.FolloweeId)
-                .HasConstraintName("follows_ibfk_2");
-
-            entity.HasOne(d => d.Follower).WithMany(p => p.FollowFollowers)
-                .HasForeignKey(d => d.FollowerId)
+            entity.HasOne<User>()
+                .WithMany(u => u.FollowFollowees)
+                .HasForeignKey(f => f.FollowerId)
                 .HasConstraintName("follows_ibfk_1");
+
+            entity.HasOne<User>()
+                .WithMany(u => u.FollowFollowers)
+                .HasForeignKey(f => f.FolloweeId)
+                .HasConstraintName("follows_ibfk_2");
         });
 
         modelBuilder.Entity<Like>(entity =>
@@ -135,10 +138,12 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("post_date");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Posts)
-                .HasForeignKey(d => d.UserId)
+            entity.HasOne<User>()
+                .WithMany(u => u.Posts)
+                .HasForeignKey(p => p.UserId)
                 .HasConstraintName("posts_ibfk_1");
         });
+
 
         modelBuilder.Entity<User>(entity =>
         {

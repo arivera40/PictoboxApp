@@ -20,8 +20,6 @@ public class JwtTokenService
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Name, user.Username),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim("profilePicUrl", user.ProfilePic ?? ""),
-            new Claim("bio", user.Bio ?? "")
         };
 
         var key = new SymmetricSecurityKey(Convert.FromBase64String(_config["Jwt:Key"]));

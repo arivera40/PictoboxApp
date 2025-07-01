@@ -80,7 +80,7 @@ export function ProfilePictureModal({
       formData.append("profilePic", selectedFile)
 
       // Replace with your .NET Core API endpoint
-      const response = await fetch("http://localhost:5193/profile/update/profile-picture", {
+      const response = await fetch("http://localhost:5193/profile/profile-picture", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -123,7 +123,7 @@ export function ProfilePictureModal({
       const token = localStorage.getItem("token")
 
       // Replace with your .NET Core API endpoint
-      const response = await fetch("https://your-dotnet-api.com/api/user/profile-picture", {
+      const response = await fetch("http://localhost:5193/profile/profile-picture", {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

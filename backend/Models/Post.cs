@@ -21,8 +21,6 @@ public partial class Post
 
     public virtual ICollection<Like> LikesNavigation { get; set; } = new List<Like>();
 
-    public virtual User User { get; set; } = null!;
-
     public Post(int userId, string imagePath, string caption)
     {
         UserId = userId;

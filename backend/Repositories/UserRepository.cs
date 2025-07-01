@@ -24,7 +24,11 @@ public class UserRepository : IUserRepository
         _db.Users.SingleOrDefaultAsync(u => u.Email == email);
 
     public Task<User?> GetById(int id) =>
-        _db.Users.SingleOrDefaultAsync(u => u.UserId == id);
+        _db.Users
+            .Include(u => u.Posts)
+            .Include(u => u.FollowFollowers)
+            .Include(u => u.FollowFollowees)
+            .SingleOrDefaultAsync(u => u.UserId == id);
 
     public Task<User?> GetByUsername(string username) =>
         _db.Users.SingleOrDefaultAsync(u => u.Username == username);
@@ -43,6 +47,12 @@ public class UserRepository : IUserRepository
 
     public Task<int> GetFollowingCount(int userId) =>
         _db.Follows.CountAsync(f => f.FollowerId == userId);
+
+    public Task<List<Follow>> GetFollowers(int userId) =>
+        _db.Follows.Where(f => f.FolloweeId == userId).ToListAsync();
+
+    public Task<List<Follow>> GetFollowees(int userId) =>
+        _db.Follows.Where(f => f.FollowerId == userId).ToListAsync();
 
     public Task<int> GetPostsCount(int userId) =>
         _db.Posts.CountAsync(p => p.UserId == userId);

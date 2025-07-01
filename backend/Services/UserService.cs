@@ -9,19 +9,24 @@ public class UserService
     {
         _userRepository = userRepository;
     }
-    public async Task<UserProfileDto> GetProfileData(int userId, string username, string profilePic)
+    public async Task<UserProfileDto> GetProfileData(int userId)
     {
-        var followersCount = await _userRepository.GetFollowersCount(userId);
-        var followingCount = await _userRepository.GetFollowingCount(userId);
         var posts = await _userRepository.GetPosts(userId);
+
+        var user = await _userRepository.GetById(userId);
+
+        if (user is null)
+            throw new Exception($"Unable to find user.");
 
         return new UserProfileDto
         {
-            ProfilePic = profilePic,
-            Username = username,
-            FollowersCount = followersCount,
-            FollowingCount = followingCount,
-            PostsCount = posts.Count(),
+            ProfilePic = user.ProfilePic ?? "",
+            Username = user.Username,
+            Email = user.Email,
+            Bio = user.Bio ?? "",
+            FollowersCount = user.FollowFollowers.Count(),
+            FollowingCount = user.FollowFollowees.Count(),
+            PostsCount = user.Posts.Count(),
             Posts = posts,
         };
     }
@@ -52,5 +57,47 @@ public class UserService
         return imageUrl;
     }
 
+    public async Task<bool> DeleteProfilePic(int userId)
+    {
+        var user = await _userRepository.GetById(userId);
+        if (user is null)
+            throw new DataException($"User with ID {userId} not found.");
 
+        user.ProfilePic = null;
+        await _userRepository.Save();
+        return true;
+    }
+
+    public async Task<bool> UpdateProfileData(int userId, ProfileUpdateRequest profileUpdate)
+    {
+        var user = await _userRepository.GetById(userId);
+        if (user is null)
+            throw new DataException($"User with ID {userId} not found.");
+
+        user.Username = profileUpdate.Username;
+        user.Email = profileUpdate.Email;
+        user.PhoneNumber = profileUpdate.PhoneNumber;
+        user.Bio = profileUpdate.Bio;
+
+        await _userRepository.Save();
+
+        return true;
+    }
+
+    public async Task<bool> UpdatePassword(int userId, PasswordUpdateRequest passwordUpdate)
+    {
+        var user = await _userRepository.GetById(userId);
+
+        if (user is null)
+            throw new DataException($"User with ID {userId} not found.");
+
+        if (!AuthUtility.VerifyPassword(passwordUpdate.CurrentPassword, user.Password))
+            throw new DataException($"Invalid Credentials");
+
+        user.Password = AuthUtility.EncryptPassword(passwordUpdate.NewPassword);
+
+        await _userRepository.Save();
+
+        return true;
+    }
 }

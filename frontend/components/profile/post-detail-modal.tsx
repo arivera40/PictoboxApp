@@ -13,9 +13,9 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 interface Comment {
   id: string
   username: string
-  // profilePicUrl: string
-  text: string
-  createdAt: string
+  profilePic: string
+  content: string
+  commentDate: string
   likes: number
   isLiked: boolean
 }
@@ -47,14 +47,17 @@ export function PostDetailModal({ open, onClose, postId, user }: PostDetailModal
   const [isLoading, setIsLoading] = useState(false)
   const [newComment, setNewComment] = useState("")
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
-
-  console.log(user);
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
     if (open && postId) {
       fetchPostDetail(postId)
     }
-  }, [open, postId])
+  }, [open, postId, refreshTrigger])
+
+  const refreshPost = () => {
+    setRefreshTrigger((prev) => prev + 1)
+  }
 
   const fetchPostDetail = async (id: string) => {
     setIsLoading(true)
@@ -131,7 +134,7 @@ export function PostDetailModal({ open, onClose, postId, user }: PostDetailModal
 
       const action = comment.isLiked ? "unlike" : "like"
 
-      const response = await fetch(`https://your-dotnet-api.com/api/comments/${commentId}/${action}`, {
+      const response = await fetch(`https://your-dotnet-api.com/api/comment/${commentId}/${action}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -177,14 +180,14 @@ export function PostDetailModal({ open, onClose, postId, user }: PostDetailModal
     try {
       const token = localStorage.getItem("token")
 
-      const response = await fetch(`https://your-dotnet-api.com/api/posts/${post.postId}/comments`, {
+      const response = await fetch(`http://localhost:5193/posts/${post.postId}/comment`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          text: newComment.trim(),
+          content: newComment.trim(),
         }),
       })
 
@@ -207,6 +210,7 @@ export function PostDetailModal({ open, onClose, postId, user }: PostDetailModal
         title: "Comment added",
         description: "Your comment has been posted successfully.",
       })
+      refreshPost();
     } catch (error) {
       toast({
         title: "Failed to add comment",
@@ -283,15 +287,15 @@ export function PostDetailModal({ open, onClose, postId, user }: PostDetailModal
                   {post.comments.map((comment) => (
                     <div key={comment.id} className="flex items-start gap-3">
                       <Avatar className="h-8 w-8">
-                        {/* <AvatarImage src={comment.profilePicUrl || "/placeholder.svg"} alt={comment.username} /> */}
+                        <AvatarImage src={comment.profilePic || "/placeholder.svg"} alt={comment.username} />
                         <AvatarFallback>{comment.username.slice(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <p className="text-sm">
-                          <span className="font-semibold">{comment.username}</span> {comment.text}
+                          <span className="font-semibold">{comment.username}</span> {comment.content}
                         </p>
                         <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>{formatTimeAgo(comment.createdAt)}</span>
+                          <span>{formatTimeAgo(comment.commentDate)}</span>
                           {comment.likes > 0 && <span>{comment.likes} likes</span>}
                           <button
                             onClick={() => handleLikeComment(comment.id)}
