@@ -9,31 +9,14 @@ public class UserService
     {
         _userRepository = userRepository;
     }
-    public async Task<UserProfileDto> GetProfileData(int userId)
+    public async Task<UserProfileDto> GetProfileData(string username)
     {
-        var posts = await _userRepository.GetPosts(userId);
-
-        var user = await _userRepository.GetById(userId);
+        var user = await _userRepository.GetByUsername(username);
 
         if (user is null)
-            throw new Exception($"Unable to find user.");
+            throw new Exception($"Unable to find user: {username}.");
 
-        return new UserProfileDto
-        {
-            ProfilePic = user.ProfilePic ?? "",
-            Username = user.Username,
-            Email = user.Email,
-            Bio = user.Bio ?? "",
-            FollowersCount = user.FollowFollowers.Count(),
-            FollowingCount = user.FollowFollowees.Count(),
-            PostsCount = user.Posts.Count(),
-            Posts = posts,
-        };
-    }
-
-    public async Task<User?> GetByUserId(int userId)
-    {
-        return await _userRepository.GetById(userId);
+        return user;
     }
 
     public async Task<string> UpdateProfilePic(int userId, IFormFile profilePic)
@@ -47,7 +30,7 @@ public class UserService
         string uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
         string imageUrl = await ImageUtility.SaveImageAsync(profilePic, uploadsDir);
 
-        var user = await _userRepository.GetById(userId);
+        var user = await _userRepository.GetByUserId(userId);
         if (user is null)
             throw new DataException($"User with ID {userId} not found.");
 
@@ -59,7 +42,7 @@ public class UserService
 
     public async Task<bool> DeleteProfilePic(int userId)
     {
-        var user = await _userRepository.GetById(userId);
+        var user = await _userRepository.GetByUserId(userId);
         if (user is null)
             throw new DataException($"User with ID {userId} not found.");
 
@@ -70,7 +53,7 @@ public class UserService
 
     public async Task<bool> UpdateProfileData(int userId, ProfileUpdateRequest profileUpdate)
     {
-        var user = await _userRepository.GetById(userId);
+        var user = await _userRepository.GetByUserId(userId);
         if (user is null)
             throw new DataException($"User with ID {userId} not found.");
 
@@ -86,7 +69,7 @@ public class UserService
 
     public async Task<bool> UpdatePassword(int userId, PasswordUpdateRequest passwordUpdate)
     {
-        var user = await _userRepository.GetById(userId);
+        var user = await _userRepository.GetByUserId(userId);
 
         if (user is null)
             throw new DataException($"User with ID {userId} not found.");

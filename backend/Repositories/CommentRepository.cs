@@ -11,10 +11,8 @@ public class CommentRepository : ICommentRepository
         _db = db;
     }
 
-    public Task<Comment> GetById(int id)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<Comment?> GetById(int id) =>
+        await _db.Comments.Where(c => c.CommentId == id).SingleOrDefaultAsync();
 
     public Task<List<Comment>> GetComments(int userId) =>
         _db.Comments.Where(p => p.UserId == userId).ToListAsync();
@@ -25,4 +23,9 @@ public class CommentRepository : ICommentRepository
         await _db.SaveChangesAsync();
         return comment;
     }
+
+    public async Task Save() => await _db.SaveChangesAsync();
+
+    public async Task DeleteById(int id) =>
+        await _db.Comments.Where(c => c.CommentId == id).ExecuteDeleteAsync();
 }

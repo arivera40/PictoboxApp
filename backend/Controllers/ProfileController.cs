@@ -4,9 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pictobox.Data;
 
-[Authorize]
 [ApiController]
-[Route("profile")]
+[Route("profile/{username}")]
 public class ProfileController : ControllerBase
 {
     private readonly UserService _userService;
@@ -19,33 +18,28 @@ public class ProfileController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetProfileAsync()
+    public async Task<IActionResult> GetProfileAsync([FromRoute] string username)
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
-        if (userIdClaim is null)
-            return Unauthorized();
-
-        int userId = int.Parse(userIdClaim.Value);
-
         try
         {
-            var profile = await _userService.GetProfileData(userId);
+            var profile = await _userService.GetProfileData(username);
             return Ok(profile);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to find user id: {UserId}", userId);
+            _logger.LogError(ex, "Failed to find user: {username}", username);
             return StatusCode(500, "An error occurred while retrieving user data.");
         }
     }
 
+    [Authorize]
     [HttpPost("profile-picture")]
-    public async Task<IActionResult> UpdateProfilePic([FromForm] IFormFile profilePic)
+    public async Task<IActionResult> UpdateProfilePic([FromRoute] string username, [FromForm] IFormFile profilePic)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim is null)
-            return Unauthorized();
+        var usernameClaim = User.FindFirst(ClaimTypes.Name);
+        if (userIdClaim is null || usernameClaim is null || usernameClaim.Value != username)
+            return Forbid();
 
         int userId = int.Parse(userIdClaim.Value);
 
@@ -61,12 +55,14 @@ public class ProfileController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpDelete("profile-picture")]
-    public async Task<IActionResult> DeleteProfilePic()
+    public async Task<IActionResult> DeleteProfilePic([FromRoute] string username)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim is null)
-            return Unauthorized();
+        var usernameClaim = User.FindFirst(ClaimTypes.Name);
+        if (userIdClaim is null || usernameClaim is null || usernameClaim.Value != username)
+            return Forbid();
 
         int userId = int.Parse(userIdClaim.Value);
 
@@ -82,6 +78,7 @@ public class ProfileController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpPut("profile-data")]
     public async Task<IActionResult> UpdateProfileData([FromBody] ProfileUpdateRequest profileUpdate)
     {
@@ -103,6 +100,7 @@ public class ProfileController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpPut("password-change")]
     public async Task<IActionResult> PasswordUpdate([FromBody] PasswordUpdateRequest passwordUpdate)
     {
@@ -115,12 +113,13 @@ public class ProfileController : ControllerBase
         try
         {
             await _userService.UpdatePassword(userId, passwordUpdate);
-            return Ok("Password updated successful.");
+            return Ok("Password updated successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update user password for user {UserId}", userId);
-            return StatusCode(500, "An error occurred while updating the users password.");
+            return StatusCode(500, "An error occurred while updating the user's password.");
         }
     }
 }
+

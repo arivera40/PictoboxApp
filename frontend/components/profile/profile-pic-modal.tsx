@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -80,7 +79,7 @@ export function ProfilePictureModal({
       formData.append("profilePic", selectedFile)
 
       // Replace with your .NET Core API endpoint
-      const response = await fetch("http://localhost:5193/profile/profile-picture", {
+      const response = await fetch(`http://localhost:5193/profile/${username}/profile-picture`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

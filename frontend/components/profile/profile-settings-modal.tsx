@@ -1,33 +1,28 @@
-"use client";
+"use client"
 
-import type React from "react";
-
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
+import type React from "react"
+import { useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Separator } from "@/components/ui/separator"
+import { useToast } from "@/hooks/use-toast"
 
 interface ProfileSettingsData {
-  username: string;
-  email: string;
-  bio: string;
-  phoneNumber: string;
+  username: string
+  email: string
+  bio: string
+  phoneNumber: string
 }
 
 interface ProfileSettingsModalProps {
-  open: boolean;
-  onClose: () => void;
-  currentData: ProfileSettingsData;
-  onProfileUpdated: (updatedData: ProfileSettingsData) => void;
+  open: boolean
+  onClose: () => void
+  currentData: ProfileSettingsData
+  onProfileUpdated: (updatedData: ProfileSettingsData) => void
+  currentUsername: string // Add this to know which profile we're updating
 }
 
 export function ProfileSettingsModal({
@@ -35,25 +30,26 @@ export function ProfileSettingsModal({
   onClose,
   currentData,
   onProfileUpdated,
+  currentUsername,
 }: ProfileSettingsModalProps) {
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"profile" | "password">("profile");
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState<"profile" | "password">("profile")
 
   const [profileData, setProfileData] = useState({
     username: currentData.username,
     email: currentData.email,
     bio: currentData.bio,
     phoneNumber: currentData.phoneNumber,
-  });
+  })
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
-  });
+  })
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const validateProfileForm = () => {
     const newErrors: Record<string, string> = {}
@@ -76,7 +72,7 @@ export function ProfileSettingsModal({
       newErrors.bio = "Bio must be less than 150 characters"
     }
 
-    if (profileData.phoneNumber && !/^\+?[\d\s\-$$$$]{10,}$/.test(profileData.phoneNumber.replace(/\s/g, ""))) {
+    if (profileData.phoneNumber && !/^\+?[\d\s\-()]{10,}$/.test(profileData.phoneNumber.replace(/\s/g, ""))) {
       newErrors.phoneNumber = "Please enter a valid phone number"
     }
 
@@ -108,124 +104,120 @@ export function ProfileSettingsModal({
   }
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!validateProfileForm()) {
-      return;
+      return
     }
 
-    setIsLoading(true);
+    setIsLoading(true)
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token")
 
-      // Replace with your .NET Core API endpoint
-      const response = await fetch(
-        "http://localhost:5193/profile/profile-data",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            username: profileData.username,
-            email: profileData.email,
-            bio: profileData.bio,
-            phoneNumber: profileData.phoneNumber,
-          }),
-        }
-      );
+      const response = await fetch(`http://localhost:5193/profile/${currentUsername}/profile-data`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username: profileData.username,
+          email: profileData.email,
+          bio: profileData.bio,
+          phoneNumber: profileData.phoneNumber,
+        }),
+      })
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update profile");
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to update profile")
       }
 
-      const updatedProfile = await response.json();
+      // Update localStorage with new username if it changed
+      if (currentUsername !== profileData.username) {
+        localStorage.setItem("username", profileData.username)
+      }
 
+      // Call the parent component's update handler
+      // This will trigger the reroute logic in the page component
       onProfileUpdated({
         username: profileData.username,
         email: profileData.email,
         bio: profileData.bio,
         phoneNumber: profileData.phoneNumber,
-      });
+      })
 
       toast({
         title: "Profile updated!",
         description: "Your profile information has been successfully updated.",
-      });
+      })
 
-      onClose();
+      // Close the modal - the parent will handle any rerouting
+      onClose()
     } catch (error) {
       toast({
         title: "Update failed",
-        description:
-          error instanceof Error ? error.message : "Failed to update profile",
+        description: error instanceof Error ? error.message : "Failed to update profile",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!validatePasswordForm()) {
-      return;
+      return
     }
 
-    setIsLoading(true);
+    setIsLoading(true)
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token")
 
-      // Replace with your .NET Core API endpoint
-      const response = await fetch(
-        "http://localhost:5193/profile/password-change",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            currentPassword: passwordData.currentPassword,
-            newPassword: passwordData.newPassword,
-          }),
-        }
-      );
+      const response = await fetch(`http://localhost:5193/profile/${currentUsername}/password-change`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      })
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to change password");
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to change password")
       }
 
       toast({
         title: "Password changed!",
         description: "Your password has been successfully updated.",
-      });
+      })
 
       // Reset password form
       setPasswordData({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
-      });
+      })
 
-      setActiveTab("profile");
+      setActiveTab("profile")
     } catch (error) {
       toast({
         title: "Password change failed",
-        description:
-          error instanceof Error ? error.message : "Failed to change password",
+        description: error instanceof Error ? error.message : "Failed to change password",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleClose = () => {
     // Reset forms when closing
@@ -289,19 +281,14 @@ export function ProfileSettingsModal({
                     setProfileData((prev) => ({
                       ...prev,
                       username: e.target.value,
-                    }));
-                    if (errors.username)
-                      setErrors((prev) => ({ ...prev, username: "" }));
+                    }))
+                    if (errors.username) setErrors((prev) => ({ ...prev, username: "" }))
                   }}
                   placeholder="Enter your username"
                   className={errors.username ? "border-red-500" : ""}
                 />
-                {errors.username && (
-                  <p className="text-sm text-red-500">{errors.username}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Your username is how others will find and mention you
-                </p>
+                {errors.username && <p className="text-sm text-red-500">{errors.username}</p>}
+                <p className="text-xs text-muted-foreground">Your username is how others will find and mention you</p>
               </div>
 
               <div className="space-y-2">
@@ -314,16 +301,13 @@ export function ProfileSettingsModal({
                     setProfileData((prev) => ({
                       ...prev,
                       email: e.target.value,
-                    }));
-                    if (errors.email)
-                      setErrors((prev) => ({ ...prev, email: "" }));
+                    }))
+                    if (errors.email) setErrors((prev) => ({ ...prev, email: "" }))
                   }}
                   placeholder="Enter your email"
                   className={errors.email ? "border-red-500" : ""}
                 />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email}</p>
-                )}
+                {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
                 <p className="text-xs text-muted-foreground">
                   We'll use this email for important account notifications
                 </p>
@@ -339,19 +323,15 @@ export function ProfileSettingsModal({
                     setProfileData((prev) => ({
                       ...prev,
                       phoneNumber: e.target.value,
-                    }));
-                    if (errors.phoneNumber)
-                      setErrors((prev) => ({ ...prev, phoneNumber: "" }));
+                    }))
+                    if (errors.phoneNumber) setErrors((prev) => ({ ...prev, phoneNumber: "" }))
                   }}
                   placeholder="+1 (555) 123-4567"
                   className={errors.phoneNumber ? "border-red-500" : ""}
                 />
-                {errors.phoneNumber && (
-                  <p className="text-sm text-red-500">{errors.phoneNumber}</p>
-                )}
+                {errors.phoneNumber && <p className="text-sm text-red-500">{errors.phoneNumber}</p>}
                 <p className="text-xs text-muted-foreground">
-                  We'll use this for account security and important
-                  notifications
+                  We'll use this for account security and important notifications
                 </p>
               </div>
 
@@ -364,31 +344,22 @@ export function ProfileSettingsModal({
                     setProfileData((prev) => ({
                       ...prev,
                       bio: e.target.value,
-                    }));
-                    if (errors.bio) setErrors((prev) => ({ ...prev, bio: "" }));
+                    }))
+                    if (errors.bio) setErrors((prev) => ({ ...prev, bio: "" }))
                   }}
                   placeholder="Tell us about yourself..."
                   rows={4}
                   className={errors.bio ? "border-red-500" : ""}
                 />
-                {errors.bio && (
-                  <p className="text-sm text-red-500">{errors.bio}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  {profileData.bio.length}/150 characters
-                </p>
+                {errors.bio && <p className="text-sm text-red-500">{errors.bio}</p>}
+                <p className="text-xs text-muted-foreground">{profileData.bio.length}/150 characters</p>
               </div>
             </div>
 
             <Separator />
 
             <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                disabled={isLoading}
-              >
+              <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
@@ -412,18 +383,13 @@ export function ProfileSettingsModal({
                     setPasswordData((prev) => ({
                       ...prev,
                       currentPassword: e.target.value,
-                    }));
-                    if (errors.currentPassword)
-                      setErrors((prev) => ({ ...prev, currentPassword: "" }));
+                    }))
+                    if (errors.currentPassword) setErrors((prev) => ({ ...prev, currentPassword: "" }))
                   }}
                   placeholder="Enter your current password"
                   className={errors.currentPassword ? "border-red-500" : ""}
                 />
-                {errors.currentPassword && (
-                  <p className="text-sm text-red-500">
-                    {errors.currentPassword}
-                  </p>
-                )}
+                {errors.currentPassword && <p className="text-sm text-red-500">{errors.currentPassword}</p>}
               </div>
 
               <div className="space-y-2">
@@ -436,19 +402,14 @@ export function ProfileSettingsModal({
                     setPasswordData((prev) => ({
                       ...prev,
                       newPassword: e.target.value,
-                    }));
-                    if (errors.newPassword)
-                      setErrors((prev) => ({ ...prev, newPassword: "" }));
+                    }))
+                    if (errors.newPassword) setErrors((prev) => ({ ...prev, newPassword: "" }))
                   }}
                   placeholder="Enter your new password"
                   className={errors.newPassword ? "border-red-500" : ""}
                 />
-                {errors.newPassword && (
-                  <p className="text-sm text-red-500">{errors.newPassword}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Password must be at least 6 characters long
-                </p>
+                {errors.newPassword && <p className="text-sm text-red-500">{errors.newPassword}</p>}
+                <p className="text-xs text-muted-foreground">Password must be at least 6 characters long</p>
               </div>
 
               <div className="space-y-2">
@@ -461,26 +422,19 @@ export function ProfileSettingsModal({
                     setPasswordData((prev) => ({
                       ...prev,
                       confirmPassword: e.target.value,
-                    }));
-                    if (errors.confirmPassword)
-                      setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                    }))
+                    if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: "" }))
                   }}
                   placeholder="Confirm your new password"
                   className={errors.confirmPassword ? "border-red-500" : ""}
                 />
-                {errors.confirmPassword && (
-                  <p className="text-sm text-red-500">
-                    {errors.confirmPassword}
-                  </p>
-                )}
+                {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
               </div>
             </div>
 
             {/* Security Tips */}
             <div className="rounded-lg bg-muted p-4">
-              <h4 className="mb-2 text-sm font-semibold">
-                Password Security Tips:
-              </h4>
+              <h4 className="mb-2 text-sm font-semibold">Password Security Tips:</h4>
               <ul className="space-y-1 text-xs text-muted-foreground">
                 <li>• Use a combination of letters, numbers, and symbols</li>
                 <li>• Make it at least 8 characters long</li>
@@ -492,12 +446,7 @@ export function ProfileSettingsModal({
             <Separator />
 
             <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                disabled={isLoading}
-              >
+              <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
@@ -508,5 +457,5 @@ export function ProfileSettingsModal({
         )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }

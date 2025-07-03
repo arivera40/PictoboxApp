@@ -50,13 +50,15 @@ export function LoginForm() {
 
       // Store the JWT token
       localStorage.setItem("token", data.token)
+      localStorage.setItem("userId", data.userId)
+      localStorage.setItem("username", data.username)
 
       toast({
         title: "Login successful!",
         description: "Welcome back to Pictobox.",
       })
 
-      router.push("/profile")
+      router.push(`/profile/${data.username}`)
     } catch (error) {
       toast({
         title: "Login failed",

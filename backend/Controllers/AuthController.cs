@@ -33,7 +33,12 @@ public class AuthController : ControllerBase
         var token = _tokenService.GenerateToken(user);
         _logger.LogInformation("Login sucess - Token generated for userId: {UserId}", user.UserId);
 
-        return Ok(new { token });
+        return Ok(new
+        {
+            token,
+            user.UserId,
+            user.Username
+         });
     }
 
     [HttpPost("register")]
@@ -77,6 +82,11 @@ public class AuthController : ControllerBase
         var token = _tokenService.GenerateToken(user);
         _logger.LogInformation("Registration success - Token generated for email: {Email}", user.Email);
 
-        return Ok(new { token });
+        return Ok(new
+        {
+            token,
+            user.UserId,
+            user.Username
+        });
     }
 }

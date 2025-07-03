@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-
+import React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -11,21 +10,22 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 
 interface Post {
-  id: string
-  imageUrl: string
+  postId: string
+  imagePath: string
   caption: string
   likes: number
   comments: number
-  createdAt: string
+  postDate: string
 }
 
 interface CreatePostModalProps {
   open: boolean
   onClose: () => void
   onPostCreated: (post: Post) => void
+  currentUsername: string
 }
 
-export function CreatePostModal({ open, onClose, onPostCreated }: CreatePostModalProps) {
+export function CreatePostModal({ open, onClose, onPostCreated, currentUsername }: CreatePostModalProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -43,6 +43,14 @@ export function CreatePostModal({ open, onClose, onPostCreated }: CreatePostModa
         imagePreview: URL.createObjectURL(file),
       }))
     }
+  }
+
+  const resetForm = () => {
+    setFormData({
+      caption: "",
+      imageFile: null,
+      imagePreview: "",
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,8 +75,9 @@ export function CreatePostModal({ open, onClose, onPostCreated }: CreatePostModa
       uploadData.append("image", formData.imageFile)
       uploadData.append("caption", formData.caption)
 
-      // Replace with your .NET Core API endpoint
-      const response = await fetch("http://localhost:5193/posts", {
+      console.log("Creating post for user:", currentUsername)
+
+      const response = await fetch(`http://localhost:5193/profile/${currentUsername}/posts`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -76,28 +85,45 @@ export function CreatePostModal({ open, onClose, onPostCreated }: CreatePostModa
         body: uploadData,
       })
 
+      console.log("Post creation response:", response.status)
+
       if (!response.ok) {
-        throw new Error("Failed to create post")
+        const errorText = await response.text()
+        console.error("Post creation failed:", errorText)
+        throw new Error(`Failed to create post: ${response.status}`)
       }
 
-      const newPost = await response.json()
+      const newPostResponse = await response.json()
+      console.log("New post response:", newPostResponse)
 
-      onPostCreated(newPost)
+      // Create a properly formatted post object
+      const newPost: Post = {
+        postId: newPostResponse.postId || newPostResponse.id || Date.now().toString(),
+        imagePath: newPostResponse.imagePath || newPostResponse.imageUrl || formData.imagePreview,
+        caption: newPostResponse.caption || formData.caption,
+        likes: newPostResponse.likes || 0,
+        comments: newPostResponse.comments || 0,
+        postDate: newPostResponse.postDate || newPostResponse.createdAt || new Date().toISOString(),
+      }
 
+      console.log("Formatted new post:", newPost)
+
+      // Reset form first
+      resetForm()
+
+      // Show success toast
       toast({
         title: "Post created!",
         description: "Your post has been shared successfully.",
       })
 
-      // Reset form
-      setFormData({
-        caption: "",
-        imageFile: null,
-        imagePreview: "",
-      })
+      // Call the callback with the new post
+      onPostCreated(newPost)
 
+      // Close the modal
       onClose()
     } catch (error) {
+      console.error("Error creating post:", error)
       toast({
         title: "Failed to create post",
         description: error instanceof Error ? error.message : "Something went wrong",
@@ -109,13 +135,18 @@ export function CreatePostModal({ open, onClose, onPostCreated }: CreatePostModa
   }
 
   const handleClose = () => {
-    setFormData({
-      caption: "",
-      imageFile: null,
-      imagePreview: "",
-    })
-    onClose()
+    if (!isLoading) {
+      resetForm()
+      onClose()
+    }
   }
+
+  // Reset form when modal opens
+  React.useEffect(() => {
+    if (open) {
+      resetForm()
+    }
+  }, [open])
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -126,7 +157,7 @@ export function CreatePostModal({ open, onClose, onPostCreated }: CreatePostModa
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="image">Choose Image</Label>
-            <Input id="image" type="file" accept="image/*" onChange={handleImageChange} required />
+            <Input id="image" type="file" accept="image/*" onChange={handleImageChange} required disabled={isLoading} />
             {formData.imagePreview && (
               <div className="mt-2">
                 <img
@@ -147,11 +178,12 @@ export function CreatePostModal({ open, onClose, onPostCreated }: CreatePostModa
               onChange={(e) => setFormData((prev) => ({ ...prev, caption: e.target.value }))}
               rows={3}
               required
+              disabled={isLoading}
             />
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>

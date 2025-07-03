@@ -17,14 +17,15 @@ interface ProfileHeaderProps {
   followingCount: number
   isOwnProfile?: boolean
   onProfilePicUpdate?: (newUrl: string) => void
-  onProfileUpdate?: (data: { username: string; email: string; bio: string; phoneNumber: string }) => void}
+  onProfileUpdate?: (data: { username: string; email: string; bio: string; phoneNumber: string }) => void
+}
 
 export function ProfileHeader({
   username,
   email = "",
+  phoneNumber = "",
   profilePic,
   bio,
-  phoneNumber = "",
   postsCount,
   followersCount,
   followingCount,
@@ -190,6 +191,7 @@ export function ProfileHeader({
             onClose={() => setShowSettingsModal(false)}
             currentData={currentProfileData}
             onProfileUpdated={handleProfileUpdate}
+            currentUsername={username}
           />
         </>
       )}

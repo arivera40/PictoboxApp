@@ -1,4 +1,5 @@
 using System.Data;
+using Microsoft.VisualBasic;
 using Pictobox.Models;
 
 public class PostService
@@ -35,11 +36,8 @@ public class PostService
         }
 
         var imagePath = $"http://localhost:5193/uploads/{fileName}";
-        var post = new Post(userId, imagePath, postRequest.Caption);
 
-        await _postRepository.Save(post);
-
-        return post;
+        return await _postRepository.Save(new Post(userId, imagePath, postRequest.Caption));
     }
 
     public async Task<PostDto?> GetPostById(int postId)
@@ -49,15 +47,6 @@ public class PostService
         if (post is null)
             throw new DataException($"Post not found - id: {postId}");
 
-        return post;
-    }
-
-    public async Task<PostDto?> PostComment(int userId, int postId, CommentRequest commentRequest)
-    {
-        var comment = new Comment(userId, postId, commentRequest.Content);
-        await _commentRepository.Save(comment);
-
-        var post = await _postRepository.GetById(postId);
         return post;
     }
 

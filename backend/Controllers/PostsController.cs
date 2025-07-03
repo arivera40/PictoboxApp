@@ -3,9 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-[Authorize]
 [ApiController]
-[Route("posts")]
+[Route("profile/{username}/posts")]
 public class PostsController : ControllerBase
 {
     private readonly PostService _postService;
@@ -17,6 +16,7 @@ public class PostsController : ControllerBase
         _logger = logger;
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> CreatePost([FromForm] CreatePostRequest postRequest)
     {
@@ -32,8 +32,8 @@ public class PostsController : ControllerBase
 
         try
         {
-            await _postService.Save(postRequest, userId);
-            return Ok("Post created successfully.");
+            var post = await _postService.Save(postRequest, userId);
+            return Ok(post);
         }
         catch (DbUpdateException ex)
         {
@@ -62,28 +62,4 @@ public class PostsController : ControllerBase
             return StatusCode(500, "An unexpected error occurred.");
         }
     }
-
-    [HttpPost]
-    [Route("{id}/comment")]
-    public async Task<IActionResult> PostComment([FromRoute] int id, [FromBody] CommentRequest commentRequest)
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
-        if (userIdClaim is null)
-            return Unauthorized();
-
-        int userId = int.Parse(userIdClaim.Value);
-
-        try
-        {
-            var post = await _postService.PostComment(userId, id, commentRequest);
-            return Ok(post);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected Error: Unable to post comment");
-            return StatusCode(500, "An unexpected error occurred.");
-        }
-    }
-
 }

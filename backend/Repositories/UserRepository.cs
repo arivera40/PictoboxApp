@@ -23,15 +23,64 @@ public class UserRepository : IUserRepository
     public Task<User?> GetByEmail(string email) =>
         _db.Users.SingleOrDefaultAsync(u => u.Email == email);
 
-    public Task<User?> GetById(int id) =>
-        _db.Users
-            .Include(u => u.Posts)
-            .Include(u => u.FollowFollowers)
-            .Include(u => u.FollowFollowees)
-            .SingleOrDefaultAsync(u => u.UserId == id);
+    public async Task<UserProfileDto?> GetById(int id)
+    {
+        return await _db.Users
+            .Where(u => u.UserId == id)
+            .Select(u => new UserProfileDto
+            {
+                ProfilePic = u.ProfilePic ?? "",
+                UserId = u.UserId,
+                Username = u.Username,
+                Email = u.Email,
+                Bio = u.Bio ?? "",
+                FollowersCount = u.FollowFollowers.Count(),
+                FollowingCount = u.FollowFollowees.Count(),
+                PostsCount = u.Posts.Count(),
+                Posts = u.Posts.Select(p => new PostDto
+                {
+                    PostId = p.PostId,
+                    Caption = p.Caption,
+                    ImagePath = p.ImagePath,
+                    PostDate = p.PostDate,
+                    Likes = p.Likes ?? 0
+                }).ToList()
+            })
+            .SingleOrDefaultAsync();
+    }
 
-    public Task<User?> GetByUsername(string username) =>
-        _db.Users.SingleOrDefaultAsync(u => u.Username == username);
+    public Task<User?> GetByUserId(int id) =>
+    _db.Users
+        .Include(u => u.Posts)
+        .Include(u => u.FollowFollowers)
+        .Include(u => u.FollowFollowees)
+        .SingleOrDefaultAsync(u => u.UserId == id);
+
+    public async Task<UserProfileDto?> GetByUsername(string username)
+    {
+        return await _db.Users
+            .Where(u => u.Username == username)
+            .Select(u => new UserProfileDto
+            {
+                ProfilePic = u.ProfilePic ?? "",
+                UserId = u.UserId,
+                Username = u.Username,
+                Email = u.Email,
+                Bio = u.Bio ?? "",
+                FollowersCount = u.FollowFollowers.Count(),
+                FollowingCount = u.FollowFollowees.Count(),
+                PostsCount = u.Posts.Count(),
+                Posts = u.Posts.Select(p => new PostDto
+                {
+                    PostId = p.PostId,
+                    Caption = p.Caption,
+                    ImagePath = p.ImagePath,
+                    PostDate = p.PostDate,
+                    Likes = p.Likes ?? 0
+                }).ToList()
+            })
+            .SingleOrDefaultAsync();
+    }
 
     public Task<bool> FindByEmail(string email) =>
         _db.Users.AnyAsync(u => u.Email == email);

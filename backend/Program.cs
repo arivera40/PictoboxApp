@@ -35,6 +35,7 @@ builder.Services.AddScoped<PostService>();
 
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<CommentRepository>();
+builder.Services.AddScoped<CommentService>();
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 builder.Services.Configure<JwtSettings>(jwtSettings);
