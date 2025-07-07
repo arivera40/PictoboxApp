@@ -49,12 +49,41 @@ public class UserRepository : IUserRepository
             .SingleOrDefaultAsync();
     }
 
+    public async Task<List<UserDto>?> SearchUsers(string query)
+    {
+        return await _db.Users
+            .Where(u => u.Username.Contains(query)
+            || u.Email.Contains(query)
+            || (u.PhoneNumber != null && u.PhoneNumber.Contains(query)))
+            .Select(u => new UserDto
+            {
+                UserId = u.UserId,
+                Username = u.Username,
+                ProfilePic = u.ProfilePic ?? "",
+            })
+            .ToListAsync();
+    }
+
+    public async Task<HashSet<int>> GetFollowingIds(int followerId, List<int> targetUserIds)
+    {
+        var followeeIds = await _db.Follows
+            .Where(f => f.FollowerId == followerId && targetUserIds.Contains(f.FolloweeId))
+            .Select(f => f.FolloweeId)
+            .ToListAsync();
+
+        return followeeIds.ToHashSet();
+    }
+
+    public async Task<bool> IsFollowing(int followerId, int followeeId) =>
+        await _db.Follows.AnyAsync(f =>
+            f.FollowerId == followerId && f.FolloweeId == followeeId);
+
     public Task<User?> GetByUserId(int id) =>
-    _db.Users
-        .Include(u => u.Posts)
-        .Include(u => u.FollowFollowers)
-        .Include(u => u.FollowFollowees)
-        .SingleOrDefaultAsync(u => u.UserId == id);
+        _db.Users
+            .Include(u => u.Posts)
+            .Include(u => u.FollowFollowers)
+            .Include(u => u.FollowFollowees)
+            .SingleOrDefaultAsync(u => u.UserId == id);
 
     public async Task<UserProfileDto?> GetByUsername(string username)
     {

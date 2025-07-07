@@ -17,11 +17,10 @@ public class CommentController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> PostComment([FromRoute] string username, [FromRoute] int postId, [FromBody] CommentRequest commentRequest)
+    public async Task<IActionResult> PostComment([FromRoute] int postId, [FromBody] CommentRequest commentRequest)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        var usernameClaim = User.FindFirst(ClaimTypes.Name);
-        if (userIdClaim is null || usernameClaim is null)
+        if (userIdClaim is null)
             return Forbid();
 
         int userId = int.Parse(userIdClaim.Value);

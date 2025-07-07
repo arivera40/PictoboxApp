@@ -19,6 +19,21 @@ public class UserService
         return user;
     }
 
+    public async Task<List<UserDto>?> SearchUsers(string query)
+    {
+        return await _userRepository.SearchUsers(query);
+    }
+
+    public async Task<bool> IsFollowing(int followerId, int followeeId)
+    {
+        return await _userRepository.IsFollowing(followerId, followeeId);
+    }
+
+    public async Task<HashSet<int>> GetFollowingIds(int followerId, List<int> targetUserIds)
+    {
+        return await _userRepository.GetFollowingIds(followerId, targetUserIds);
+    }
+
     public async Task<string> UpdateProfilePic(int userId, IFormFile profilePic)
     {
         if (profilePic == null)

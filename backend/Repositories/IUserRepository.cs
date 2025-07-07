@@ -3,6 +3,9 @@ using Pictobox.Models;
 public interface IUserRepository
 {
     Task<UserProfileDto?> GetById(int id);
+    Task<List<UserDto>?> SearchUsers(string query);
+    Task<bool> IsFollowing(int followerId, int followeeId);
+    Task<HashSet<int>> GetFollowingIds(int followerId, List<int> targetUserIds);
     Task<User?> GetByUserId(int id);
     Task<User?> GetByEmail(string email);
     Task<UserProfileDto?> GetByUsername(string username);

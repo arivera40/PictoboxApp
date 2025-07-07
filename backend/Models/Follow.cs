@@ -10,4 +10,10 @@ public partial class Follow
     public int FolloweeId { get; set; }
 
     public DateTime? FollowDate { get; set; }
+
+    public Follow(int followerId, int followeeId)
+    {
+        FollowerId = followerId;
+        FolloweeId = followeeId;
+    }
 }

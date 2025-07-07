@@ -23,7 +23,6 @@ public class JwtTokenService
         };
 
         var key = new SymmetricSecurityKey(Convert.FromBase64String(_config["Jwt:Key"]));
-        // var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("L+KJH5OiWN1Y8vRiJjlnFAyxmp3wKGhAFrmKVV6DGq//MsN9P7HihQMIxTYZya1d4ggwLTfabn88uMrJ41bNRw=="));
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

@@ -5,19 +5,10 @@ using Pictobox.Models;
 public class PostService
 {
     private readonly PostRepository _postRepository;
-    private readonly CommentRepository _commentRepository;
 
     public PostService(PostRepository postRepository, CommentRepository commentRepository)
     {
         _postRepository = postRepository;
-        _commentRepository = commentRepository;
-    }
-
-    public string GenerateUniqueFileName(string originalFileName)
-    {
-        var extension = Path.GetExtension(originalFileName);
-        var uniqueName = $"{Guid.NewGuid()}{extension}";
-        return uniqueName;
     }
 
     public async Task<Post> Save(CreatePostRequest postRequest, int userId)
@@ -27,7 +18,7 @@ public class PostService
         if (!Directory.Exists(uploadsPath))
             Directory.CreateDirectory(uploadsPath);
 
-        var fileName = GenerateUniqueFileName(postRequest.ImageFile.FileName);
+        var fileName = ImageUtility.GenerateUniqueFileName(postRequest.ImageFile.FileName);
         var filePath = Path.Combine(uploadsPath, fileName);
 
         using (var stream = new FileStream(filePath, FileMode.Create))
